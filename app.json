@@ -1,0 +1,9 @@
+{
+  "expo": {
+    "name": "Modals ScrollView SafeAreaView",
+    "slug": "modals-scrollview-safeareaview",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light"
+  }
+}
