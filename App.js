@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Modal, Button, Alert } from 'react-native';
+import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
@@ -44,6 +45,9 @@ const SCROLL_LINES = [
 ];
 
 export default function App() {
+  // 1. Estado que controla si el modal está abierto o cerrado.
+  const [modalVisible, setModalVisible] = useState(false);
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
@@ -67,6 +71,21 @@ export default function App() {
             </View>
           ))}
 
+          <Text style={styles.sectionTitle}>Ejemplo de Modal</Text>
+          <View style={styles.card}>
+            <Text style={styles.cardText}>
+              Presiona el botón para abrir un modal transparente con animación slide.
+            </Text>
+            <View style={styles.buttonWrapper}>
+              {/* 3. El botón abre el modal cambiando el estado a true. */}
+              <Button
+                title="Show Modal"
+                color={COLORS.primary}
+                onPress={() => setModalVisible(true)}
+              />
+            </View>
+          </View>
+
           <Text style={styles.sectionTitle}>Ejemplo de ScrollView</Text>
           <View style={styles.card}>
             {SCROLL_LINES.map((line) => (
@@ -77,6 +96,33 @@ export default function App() {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      {/* 2. Componente Modal. Se muestra cuando modalVisible es true. */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          // Se llama con el botón "atrás" de Android.
+          Alert.alert('Modal has been closed.');
+          setModalVisible(false);
+        }}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Hello, I am a Modal!</Text>
+            <Text style={styles.modalText}>
+              Aparezco encima de la pantalla sin cambiar de vista. El fondo oscuro es
+              rgba(0, 0, 0, 0.5) gracias a transparent={'{true}'}.
+            </Text>
+            <Button
+              title="Close Modal"
+              color={COLORS.primary}
+              onPress={() => setModalVisible(!modalVisible)}
+            />
+          </View>
+        </View>
+      </Modal>
       <StatusBar style="dark" />
     </SafeAreaProvider>
   );
@@ -140,6 +186,34 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
+    color: COLORS.muted,
+  },
+  buttonWrapper: {
+    marginTop: 16,
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalBox: {
+    width: '100%',
+    padding: 24,
+    borderRadius: 20,
+    backgroundColor: COLORS.card,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  modalText: {
+    marginTop: 8,
+    marginBottom: 20,
+    fontSize: 15,
+    lineHeight: 22,
     color: COLORS.muted,
   },
   bigText: {
