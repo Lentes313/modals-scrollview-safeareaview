@@ -1,4 +1,14 @@
-import { View, Text, ScrollView, StyleSheet, Modal, Button, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Modal,
+  Button,
+  Alert,
+  Pressable,
+  Platform,
+} from 'react-native';
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -19,18 +29,61 @@ const TOPICS = [
     title: 'Modal',
     summary:
       'Muestra contenido encima de la pantalla actual sin salir de ella. Se controla con un estado booleano y la prop visible.',
+    points: [
+      'visible: true o false, normalmente viene de useState.',
+      'animationType: "none", "slide" o "fade".',
+      'transparent: deja ver la pantalla de atrás para poner un fondo semitransparente.',
+      'onRequestClose: se ejecuta con el botón "atrás" de Android; ahí se cierra el modal.',
+      'Úsalo para confirmaciones, avisos o formularios cortos, no para navegar entre pantallas.',
+    ],
+    code: `const [modalVisible, setModalVisible] = useState(false);
+
+<Modal
+  animationType="slide"
+  transparent={true}
+  visible={modalVisible}
+  onRequestClose={() => setModalVisible(false)}>
+  <Text>Hello, I am a Modal!</Text>
+</Modal>`,
   },
   {
     id: 'scrollview',
     title: 'ScrollView',
     summary:
       'Contenedor que permite desplazarse cuando el contenido es más alto que la pantalla. Renderiza todos sus hijos a la vez.',
+    points: [
+      'Necesita una altura limitada (flex: 1 en el padre) para poder desplazarse.',
+      'style se aplica al contenedor y contentContainerStyle al contenido interno.',
+      'horizontal={true} cambia el desplazamiento a horizontal.',
+      'showsVerticalScrollIndicator oculta o muestra la barra de desplazamiento.',
+      'Para listas largas conviene FlatList, que solo renderiza lo visible.',
+    ],
+    code: `<ScrollView>
+  <Text style={{ fontSize: 96 }}>Scroll me plz</Text>
+  <Text style={{ fontSize: 96 }}>If you like</Text>
+  <Text style={{ fontSize: 80 }}>Expo</Text>
+</ScrollView>`,
   },
   {
     id: 'safeareaview',
     title: 'SafeAreaView',
     summary:
       'Mantiene el contenido dentro de los límites seguros del dispositivo: sin taparse con el notch, la barra de estado o la barra de gestos.',
+    points: [
+      'Se estiliza igual que un View con la prop style, por ejemplo flex: 1.',
+      'El SafeAreaView de react-native está deprecado y solo funciona en iOS.',
+      'En Expo se usa el de react-native-safe-area-context, que funciona en iOS y Android.',
+      'Requiere un SafeAreaProvider en la raíz de la app (y otro dentro de cada Modal).',
+      'edges permite elegir qué lados proteger: top, bottom, left, right.',
+    ],
+    code: `import { SafeAreaProvider, SafeAreaView }
+  from 'react-native-safe-area-context';
+
+<SafeAreaProvider>
+  <SafeAreaView style={{ flex: 1 }}>
+    <Text>Content inside SafeAreaView</Text>
+  </SafeAreaView>
+</SafeAreaProvider>`,
   },
 ];
 
@@ -47,6 +100,8 @@ const SCROLL_LINES = [
 export default function App() {
   // 1. Estado que controla si el modal está abierto o cerrado.
   const [modalVisible, setModalVisible] = useState(false);
+  // Tema que se muestra en el modal de detalle (null = cerrado).
+  const [selectedTopic, setSelectedTopic] = useState(null);
 
   return (
     <SafeAreaProvider>
@@ -65,10 +120,15 @@ export default function App() {
           showsVerticalScrollIndicator={false}
         >
           {TOPICS.map((topic) => (
-            <View key={topic.id} style={styles.card}>
+            <Pressable
+              key={topic.id}
+              style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+              onPress={() => setSelectedTopic(topic)}
+            >
               <Text style={styles.cardTitle}>{topic.title}</Text>
               <Text style={styles.cardText}>{topic.summary}</Text>
-            </View>
+              <Text style={styles.link}>Ver detalle y código →</Text>
+            </Pressable>
           ))}
 
           <Text style={styles.sectionTitle}>Ejemplo de Modal</Text>
@@ -122,6 +182,46 @@ export default function App() {
             />
           </View>
         </View>
+      </Modal>
+
+      {/* Modal de pantalla completa: Modal > SafeAreaView > ScrollView.
+          El Modal se dibuja fuera del árbol normal, por eso lleva su propio
+          SafeAreaProvider para poder calcular las áreas seguras. */}
+      <Modal
+        animationType="slide"
+        visible={selectedTopic !== null}
+        onRequestClose={() => setSelectedTopic(null)}
+      >
+        <SafeAreaProvider>
+          <SafeAreaView style={styles.safeArea}>
+            <View style={styles.detailHeader}>
+              <Text style={styles.headerTitle}>{selectedTopic?.title}</Text>
+              <Pressable
+                style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
+                onPress={() => setSelectedTopic(null)}
+              >
+                <Text style={styles.closeText}>Cerrar</Text>
+              </Pressable>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+              <Text style={styles.cardText}>{selectedTopic?.summary}</Text>
+
+              <Text style={[styles.sectionTitle, styles.detailSection]}>Puntos clave</Text>
+              {selectedTopic?.points.map((point) => (
+                <View key={point} style={styles.pointRow}>
+                  <Text style={styles.bullet}>•</Text>
+                  <Text style={styles.pointText}>{point}</Text>
+                </View>
+              ))}
+
+              <Text style={[styles.sectionTitle, styles.detailSection]}>Código</Text>
+              <View style={styles.codeBox}>
+                <Text style={styles.codeText}>{selectedTopic?.code}</Text>
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+        </SafeAreaProvider>
       </Modal>
       <StatusBar style="dark" />
     </SafeAreaProvider>
@@ -215,6 +315,66 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: COLORS.muted,
+  },
+  link: {
+    marginTop: 12,
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  pressed: {
+    opacity: 0.6,
+  },
+  detailHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: COLORS.card,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  closeButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: COLORS.primaryLight,
+  },
+  closeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  detailSection: {
+    marginTop: 24,
+  },
+  pointRow: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  bullet: {
+    width: 18,
+    fontSize: 15,
+    lineHeight: 22,
+    color: COLORS.primary,
+  },
+  pointText: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 22,
+    color: COLORS.text,
+  },
+  codeBox: {
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: COLORS.text,
+  },
+  codeText: {
+    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#E5E7EB',
   },
   bigText: {
     fontWeight: '800',
