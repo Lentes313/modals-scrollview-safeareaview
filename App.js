@@ -76,8 +76,7 @@ const TOPICS = [
       'Requiere un SafeAreaProvider en la raíz de la app (y otro dentro de cada Modal).',
       'edges permite elegir qué lados proteger: top, bottom, left, right.',
     ],
-    code: `import { SafeAreaProvider, SafeAreaView }
-  from 'react-native-safe-area-context';
+    code: `import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 <SafeAreaProvider>
   <SafeAreaView style={{ flex: 1 }}>
@@ -216,9 +215,15 @@ export default function App() {
               ))}
 
               <Text style={[styles.sectionTitle, styles.detailSection]}>Código</Text>
-              <View style={styles.codeBox}>
+              {/* ScrollView horizontal: las líneas largas de código no se cortan,
+                  se desplazan de lado. */}
+              <ScrollView
+                horizontal={true}
+                style={styles.codeBox}
+                contentContainerStyle={styles.codeContent}
+              >
                 <Text style={styles.codeText}>{selectedTopic?.code}</Text>
-              </View>
+              </ScrollView>
             </ScrollView>
           </SafeAreaView>
         </SafeAreaProvider>
@@ -366,9 +371,11 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   codeBox: {
-    padding: 16,
     borderRadius: 12,
     backgroundColor: COLORS.text,
+  },
+  codeContent: {
+    padding: 16,
   },
   codeText: {
     fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
